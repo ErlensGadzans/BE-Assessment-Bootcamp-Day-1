@@ -18,9 +18,9 @@ const writeFile = async (filePath, content) => {
 };
 
 // //GET ARRAY OF EXAM
-router.get("/", async (req, res, next) => {
-  res.send(await readFile(examFilePath));
-});
+// router.get("/", async (req, res, next) => {
+//   res.send(await readFile(examFilePath));
+// });
 
 //POST USER WITH LISTED QUESTIONS, WHO WILL PARITICIPATE IN EXAM
 router.post("/start", async (req, res, next) => {
@@ -35,6 +35,7 @@ router.post("/start", async (req, res, next) => {
       ...req.body,
       _id: uniqid(),
       examDate: new Date(),
+      isCompleted: false,
       questions: [],
     };
 
@@ -48,6 +49,7 @@ router.post("/start", async (req, res, next) => {
 
     //push to examDatabase
     examDataBase.push(newExam);
+
     //write back to file
 
     await writeFile(examFilePath, examDataBase);
@@ -94,8 +96,27 @@ router.post("/:id/answer", async (req, res, next) => {
     currentExam.score = 0;
   }
 
+  //8)write back to json
+  //writeFile(examFilePath);
   await writeFile(examFilePath, examDataBase);
   res.send("ok");
+});
+
+router.get("/:id", async (req, res, next) => {
+  try {
+    const examDataBase = await readFile(examFilePath);
+    // select current exam
+
+    const selectedExam = await examDataBase.find(
+      (exam) => exam._id === req.params.id
+    );
+    console.log(selectedExam);
+    selectedExam.isCompleted = true;
+    res.send(selectedExam);
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
 });
 
 module.exports = router;
