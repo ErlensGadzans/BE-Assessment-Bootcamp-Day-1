@@ -18,9 +18,9 @@ const writeFile = async (filePath, content) => {
 };
 
 // //GET ARRAY OF EXAM
-// router.get("/", async (req, res, next) => {
-//   res.send(await readFile(examFilePath));
-// });
+router.get("/", async (req, res, next) => {
+  res.send(await readFile(examFilePath));
+});
 
 //POST USER WITH LISTED QUESTIONS, WHO WILL PARITICIPATE IN EXAM
 router.post("/start", async (req, res, next) => {
@@ -28,7 +28,7 @@ router.post("/start", async (req, res, next) => {
     // RECEIVE EXAM AND QUESTIONS
     const examDataBase = await readFile(examFilePath);
     const questionsDataBase = await readFile(questionsFilePath);
-    console.log(examDataBase);
+
     //create exam object (const newExam) (some fields come from the body, some are generated), add questions:[]
 
     const newExam = {
@@ -37,7 +37,7 @@ router.post("/start", async (req, res, next) => {
       examDate: new Date(),
       questions: [],
     };
-    console.log(newExam);
+
     //generate 5 questions
     // for loop (randomIndex, newExam.questions.push(questionsDatabase[randomIndex])   )
 
@@ -45,17 +45,57 @@ router.post("/start", async (req, res, next) => {
       let randomIndex = Math.floor(Math.random() * questionsDataBase.length);
       newExam.questions.push(questionsDataBase[randomIndex]);
     }
-    console.log(newExam);
+
     //push to examDatabase
     examDataBase.push(newExam);
     //write back to file
-    console.log(examDataBase);
+
     await writeFile(examFilePath, examDataBase);
     res.send("User with questions is added!");
   } catch (error) {
     console.log(error);
     next(error);
   }
+});
+
+//POST /exam/{id}/answer
+
+router.post("/:id/answer", async (req, res, next) => {
+  const examDataBase = await readFile(examFilePath);
+
+  //1) identify exam by id
+  const currentExam = examDataBase.find((exam) => exam._id === req.params.id);
+
+  //2) identify question (use index from array)
+  currentExam.questions[req.body.question].providedAnswer = req.body.answer;
+  //console.log(currentExam);
+  //5)add to exm obj score:0
+  //const currentExam = { score: 0 };
+  console.log(
+    currentExam.questions[req.body.question].answers[req.body.answer]
+  );
+  if (
+    currentExam.score &&
+    currentExam.questions[req.body.question].answers[req.body.answer]
+      .isCorrect === true
+  ) {
+    currentExam.score++;
+  } else if (
+    !currentExam.score &&
+    currentExam.questions[req.body.question].answers[req.body.answer]
+      .isCorrect === true
+  ) {
+    currentExam.score = 1;
+  } else if (
+    !currentExam.score &&
+    currentExam.questions[req.body.question].answers[req.body.answer]
+      .isCorrect === false
+  ) {
+    currentExam.score = 0;
+  }
+
+  await writeFile(examFilePath, examDataBase);
+  res.send("ok");
 });
 
 module.exports = router;
