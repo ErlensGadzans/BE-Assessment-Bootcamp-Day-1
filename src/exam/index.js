@@ -35,7 +35,7 @@ router.post("/start", async (req, res, next) => {
       ...req.body,
       _id: uniqid(),
       examDate: new Date(),
-      isCompleted: false,
+
       questions: [],
     };
 
@@ -75,8 +75,11 @@ router.post("/:id/answer", async (req, res, next) => {
   //const currentExam = { score: 0 };
   console.log(
     currentExam.questions[req.body.question].answers[req.body.answer]
+      .providedAnswer
   );
-  if (
+  if (currentExam.questions[req.body.question].providedAnswer) {
+    res.send("You already answered to this question");
+  } else if (
     currentExam.score &&
     currentExam.questions[req.body.question].answers[req.body.answer]
       .isCorrect === true
@@ -99,7 +102,7 @@ router.post("/:id/answer", async (req, res, next) => {
   //8)write back to json
   //writeFile(examFilePath);
   await writeFile(examFilePath, examDataBase);
-  res.send("ok");
+  res.send(examDataBase);
 });
 
 router.get("/:id", async (req, res, next) => {
@@ -111,7 +114,6 @@ router.get("/:id", async (req, res, next) => {
       (exam) => exam._id === req.params.id
     );
     console.log(selectedExam);
-    selectedExam.isCompleted = true;
     res.send(selectedExam);
   } catch (error) {
     console.log(error);
